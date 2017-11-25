@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">AndroidMVP</string>
+
+    <string name="user_activity">UserActivity</string>
+
+    <string name="hint_name">姓名</string>
+    <string name="hint_age">年龄</string>
+
+    <string name="btn_confirm">确定</string>
+    <string name="btn_reset">重置</string>
+
+    <string name="tip_save_success">保存成功</string>
+    <string name="tip_save_failed">保存失败</string>
 </resources>
