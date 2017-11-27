@@ -18,6 +18,12 @@ View通常是指 Activity、Fragment 或者某个 View 控件，<font color=red>
 
 在MVP里，如图，Presenter 完全将 Model 和 View 进行了分离，主要的程序逻辑在 Presenter 里实现。而且， Presenter 与具体的 View 是没有直接关联的，而是通过定义好的**接口**进行交互，从而使得在变更 View 时可以保持 Presenter 的不变，这点符合面向接口编程的特点。 View 只应该有简单的 get/set 方法，以及用户输入和 UI 更新的内容，除此之外就不应该有更多的内容。决不允许 View 直接访问 Model，这就是其与 MVC 的很大的不同之处。
 
+- Model 对应业务逻辑和实体模型。
+- View 对应 Activity，Fragment 等，负责 View 的绘制及用户交互。
+- Presenter 负责完成 View 与 Model 之间的交互。
+
+
+
 # 代码练习
 
 ## [1. UserActivity](https://github.com/YoungBear/AndroidMVP/blob/master/md_files/android_mvp_user_activity.md)
