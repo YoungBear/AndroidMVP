@@ -1,9 +1,6 @@
-package com.ysx.androidmvp;
+package com.ysx.androidmvp.user;
 
 import android.content.SharedPreferences;
-
-import com.ysx.androidmvp.user.UserBean;
-import com.ysx.androidmvp.user.UserModel;
 
 import junit.framework.Assert;
 
@@ -22,6 +19,9 @@ import static org.mockito.Mockito.when;
  * @author ysx
  * @date 2017/11/28
  * @description UserModel的单元测试
+ */
+/**
+ * Unit tests for the {@link UserModel} that mocks {@link SharedPreferences}.
  */
 @RunWith(MockitoJUnitRunner.class)
 public class UserModelTest {
