@@ -1,5 +1,10 @@
 package com.ysx.androidmvp.user;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import com.ysx.androidmvp.MyApplication;
+
 /**
  * @author ysx
  * @date 2017/11/25
@@ -13,7 +18,9 @@ public class UserPresenter implements UserContract.Presenter {
 
     public UserPresenter(UserContract.View view) {
         mView = view;
-        mModel = new UserModel();
+        SharedPreferences sharedPreferences = MyApplication.sContext.getSharedPreferences(
+                MyApplication.SP_NAME, Context.MODE_PRIVATE);
+        mModel = new UserModel(sharedPreferences);
     }
 
     @Override
@@ -25,6 +32,9 @@ public class UserPresenter implements UserContract.Presenter {
 
     @Override
     public boolean saveUser(String name, int age) {
-        return mModel.saveUser(name, age);
+        UserBean userBean = new UserBean();
+        userBean.setName(name);
+        userBean.setAge(age);
+        return mModel.saveUser(userBean);
     }
 }

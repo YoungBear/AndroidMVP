@@ -16,11 +16,10 @@ public interface UserContract {
         UserBean loadUser();
 
         /**
-         * @param name
-         * @param age
+         * @param userBean
          * @return 将用户信息保存到本地数据库中
          */
-        boolean saveUser(String name, int age);
+        boolean saveUser(UserBean userBean);
     }
 
     interface View {

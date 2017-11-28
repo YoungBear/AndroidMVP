@@ -1,9 +1,6 @@
 package com.ysx.androidmvp.user;
 
-import android.content.Context;
 import android.content.SharedPreferences;
-
-import com.ysx.androidmvp.MyApplication;
 
 /**
  * @author ysx
@@ -15,8 +12,14 @@ import com.ysx.androidmvp.MyApplication;
 
 public class UserModel implements UserContract.Model {
 
-    private static final String SP_KEY_NAME = "name";
-    private static final String SP_KEY_AGE = "age";
+    public static final String SP_KEY_NAME = "name";
+    public static final String SP_KEY_AGE = "age";
+
+    private final SharedPreferences mSharedPreferences;
+
+    public UserModel(SharedPreferences sharedPreferences) {
+        this.mSharedPreferences = sharedPreferences;
+    }
 
     /**
      * @return
@@ -24,10 +27,8 @@ public class UserModel implements UserContract.Model {
      */
     @Override
     public UserBean loadUser() {
-        SharedPreferences sp = MyApplication.sContext.getSharedPreferences(
-                MyApplication.SP_NAME, Context.MODE_PRIVATE);
-        String name = sp.getString(SP_KEY_NAME, "defaultName");
-        int age = sp.getInt(SP_KEY_AGE, 0);
+        String name = mSharedPreferences.getString(SP_KEY_NAME, "defaultName");
+        int age = mSharedPreferences.getInt(SP_KEY_AGE, 0);
         UserBean userBean = new UserBean();
         userBean.setName(name);
         userBean.setAge(age);
@@ -35,12 +36,10 @@ public class UserModel implements UserContract.Model {
     }
 
     @Override
-    public boolean saveUser(String name, int age) {
-        SharedPreferences sp = MyApplication.sContext.getSharedPreferences(
-                MyApplication.SP_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString(SP_KEY_NAME, name);
-        editor.putInt(SP_KEY_AGE, age);
+    public boolean saveUser(UserBean userBean) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(SP_KEY_NAME, userBean.getName());
+        editor.putInt(SP_KEY_AGE, userBean.getAge());
         return editor.commit();
     }
 }
