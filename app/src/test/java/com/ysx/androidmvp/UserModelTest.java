@@ -9,11 +9,13 @@ import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -21,7 +23,7 @@ import static org.mockito.Mockito.when;
  * @date 2017/11/28
  * @description UserModel的单元测试
  */
-
+@RunWith(MockitoJUnitRunner.class)
 public class UserModelTest {
     private static final String TEST_NAME = "Test name";
     private static final int TEST_AGE = 20;
@@ -33,18 +35,17 @@ public class UserModelTest {
     /**
      * Mock对象
      */
+    @Mock
     private SharedPreferences mMockSharedPreferences;
+    @Mock
     private SharedPreferences mMockBrokenSharedPreferences;
+    @Mock
     private SharedPreferences.Editor mMockEditor;
+    @Mock
     private SharedPreferences.Editor mMockBrokenEditor;
 
     @Before
     public void initMocks() {
-
-        mMockSharedPreferences = mock(SharedPreferences.class);
-        mMockBrokenSharedPreferences = mock(SharedPreferences.class);
-        mMockEditor = mock(SharedPreferences.Editor.class);
-        mMockBrokenEditor = mock(SharedPreferences.Editor.class);
 
         mUserBean = new UserBean();
         mUserBean.setName(TEST_NAME);
