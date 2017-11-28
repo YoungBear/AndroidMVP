@@ -11,13 +11,15 @@ public interface UserContract {
 
     interface Model {
         /**
-         * @return 从数据库中获取UserBean对象
+         * 从SharedPreferences中获取UserBean对象
+         * @return 取得的对象
          */
         UserBean loadUser();
 
         /**
+         * 将用户信息保存到SharedPreferences中
          * @param userBean
-         * @return 将用户信息保存到本地数据库中
+         * @return 是否成功保存
          */
         boolean saveUser(UserBean userBean);
     }
@@ -35,12 +37,14 @@ public interface UserContract {
         int getInputAge();
 
         /**
-         * @param name 更新UI，更新显示姓名
+         * 更新UI，更新显示姓名
+         * @param name
          */
         void setName(String name);
 
         /**
-         * @param age 更新UI，更新显示年龄
+         * 更新UI，更新显示年龄
+         * @param age
          */
         void setAge(int age);
 

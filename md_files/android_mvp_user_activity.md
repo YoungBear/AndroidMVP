@@ -28,7 +28,7 @@ UserActivity只有一个界面，用来显示用户名，年龄，还有一些�
 ```
     interface Model {
         UserBean loadUser();
-        boolean saveUser(String name, int age);
+        boolean saveUser(UserBean userBean);
     }
 ```
 
@@ -80,16 +80,17 @@ public interface UserContract {
 
     interface Model {
         /**
-         * @return 从数据库中获取UserBean对象
+         * 从SharedPreferences中获取UserBean对象
+         * @return 取得的对象
          */
         UserBean loadUser();
 
         /**
-         * @param name
-         * @param age
-         * @return 将用户信息保存到本地数据库中
+         * 将用户信息保存到SharedPreferences中
+         * @param userBean
+         * @return 是否成功保存
          */
-        boolean saveUser(String name, int age);
+        boolean saveUser(UserBean userBean);
     }
 
     interface View {
@@ -105,12 +106,14 @@ public interface UserContract {
         int getInputAge();
 
         /**
-         * @param name 更新UI，更新显示姓名
+         * 更新UI，更新显示姓名
+         * @param name
          */
         void setName(String name);
 
         /**
-         * @param age 更新UI，更新显示年龄
+         * 更新UI，更新显示年龄
+         * @param age
          */
         void setAge(int age);
 
@@ -146,10 +149,7 @@ UserModel主要实现加载用户信息和保存用户信息两个方法，通�
 ```
 package com.ysx.androidmvp.user;
 
-import android.content.Context;
 import android.content.SharedPreferences;
-
-import com.ysx.androidmvp.MyApplication;
 
 /**
  * @author ysx
@@ -161,8 +161,14 @@ import com.ysx.androidmvp.MyApplication;
 
 public class UserModel implements UserContract.Model {
 
-    private static final String SP_KEY_NAME = "name";
-    private static final String SP_KEY_AGE = "age";
+    public static final String SP_KEY_NAME = "name";
+    public static final String SP_KEY_AGE = "age";
+
+    private final SharedPreferences mSharedPreferences;
+
+    public UserModel(SharedPreferences sharedPreferences) {
+        this.mSharedPreferences = sharedPreferences;
+    }
 
     /**
      * @return
@@ -170,10 +176,8 @@ public class UserModel implements UserContract.Model {
      */
     @Override
     public UserBean loadUser() {
-        SharedPreferences sp = MyApplication.sContext.getSharedPreferences(
-                MyApplication.SP_NAME, Context.MODE_PRIVATE);
-        String name = sp.getString(SP_KEY_NAME, "defaultName");
-        int age = sp.getInt(SP_KEY_AGE, 0);
+        String name = mSharedPreferences.getString(SP_KEY_NAME, "defaultName");
+        int age = mSharedPreferences.getInt(SP_KEY_AGE, 0);
         UserBean userBean = new UserBean();
         userBean.setName(name);
         userBean.setAge(age);
@@ -181,12 +185,10 @@ public class UserModel implements UserContract.Model {
     }
 
     @Override
-    public boolean saveUser(String name, int age) {
-        SharedPreferences sp = MyApplication.sContext.getSharedPreferences(
-                MyApplication.SP_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString(SP_KEY_NAME, name);
-        editor.putInt(SP_KEY_AGE, age);
+    public boolean saveUser(UserBean userBean) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(SP_KEY_NAME, userBean.getName());
+        editor.putInt(SP_KEY_AGE, userBean.getAge());
         return editor.commit();
     }
 }
@@ -201,6 +203,11 @@ UserPresenter实现加载用户信息和保存用户信息。Presenter中有两�
 ```
 package com.ysx.androidmvp.user;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import com.ysx.androidmvp.MyApplication;
+
 /**
  * @author ysx
  * @date 2017/11/25
@@ -214,7 +221,9 @@ public class UserPresenter implements UserContract.Presenter {
 
     public UserPresenter(UserContract.View view) {
         mView = view;
-        mModel = new UserModel();
+        SharedPreferences sharedPreferences = MyApplication.sContext.getSharedPreferences(
+                MyApplication.SP_NAME, Context.MODE_PRIVATE);
+        mModel = new UserModel(sharedPreferences);
     }
 
     @Override
@@ -226,7 +235,10 @@ public class UserPresenter implements UserContract.Presenter {
 
     @Override
     public boolean saveUser(String name, int age) {
-        return mModel.saveUser(name, age);
+        UserBean userBean = new UserBean();
+        userBean.setName(name);
+        userBean.setAge(age);
+        return mModel.saveUser(userBean);
     }
 }
 ```
@@ -327,6 +339,145 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
 }
 
 ```
+
+## 添加单元测试
+
+参考google-sample的单元测试项目[Basic sample for Espresso](https://github.com/googlesamples/android-testing/tree/master/ui/espresso/BasicSample)。
+
+### 测试UserModel
+
+这里参考[BasicSample](https://github.com/googlesamples/android-testing/tree/master/ui/espresso/BasicSample)中的`SharedPreferencesHelperTest`测试类。
+
+UserModel有两个方法：`loadUser()和saveUser()`。所以我们只需要测试加载用户和保存用户即可。这里，我们写一个测试的用户：name为"Test name"，age为20。我们的测试步骤是，首先将该用户调用loadUser()保存，然后再读取用户，判断name和age字段的值是否相等。详细代码为：
+
+```
+package com.ysx.androidmvp;
+
+import android.content.SharedPreferences;
+
+import com.ysx.androidmvp.user.UserBean;
+import com.ysx.androidmvp.user.UserModel;
+
+import junit.framework.Assert;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * @author ysx
+ * @date 2017/11/28
+ * @description UserModel的单元测试
+ */
+
+public class UserModelTest {
+    private static final String TEST_NAME = "Test name";
+    private static final int TEST_AGE = 20;
+
+    private UserBean mUserBean;
+    private UserModel mMockUserModel;
+    private UserModel mMockBrokenUserModel;
+
+    /**
+     * Mock对象
+     */
+    private SharedPreferences mMockSharedPreferences;
+    private SharedPreferences mMockBrokenSharedPreferences;
+    private SharedPreferences.Editor mMockEditor;
+    private SharedPreferences.Editor mMockBrokenEditor;
+
+    @Before
+    public void initMocks() {
+
+        mMockSharedPreferences = mock(SharedPreferences.class);
+        mMockBrokenSharedPreferences = mock(SharedPreferences.class);
+        mMockEditor = mock(SharedPreferences.Editor.class);
+        mMockBrokenEditor = mock(SharedPreferences.Editor.class);
+
+        mUserBean = new UserBean();
+        mUserBean.setName(TEST_NAME);
+        mUserBean.setAge(TEST_AGE);
+
+        // Create a mocked SharedPreferences.
+        mMockUserModel = createMockUserModel();
+
+        // Create a mocked SharedPreferences that fails at saving data.
+        mMockBrokenUserModel = createBrokenMockUserModel();
+
+    }
+
+    /**
+     * 测试保存和读取用户数据
+     */
+    @Test
+    public void userModel_SaveAndReadPersonalInformation() {
+        // Save the personal information to SharedPreferences
+        boolean success = mMockUserModel.saveUser(mUserBean);
+
+        Assert.assertEquals("Checking that UserModel.save... returns true",
+                success, true);
+
+        // Read personal information from SharedPreferences
+        UserBean savedUserBean = mMockUserModel.loadUser();
+
+        // Make sure both written and retrieved personal information are equal.
+        Assert.assertEquals("Checking that UserModel.name has been persisted and read correctly",
+                mUserBean.getName(), savedUserBean.getName());
+        Assert.assertEquals("Checking that UserModel.age has been persisted and read correctly",
+                mUserBean.getAge(), savedUserBean.getAge());
+
+    }
+
+    @Test
+    public void userModel_SavePersonalInformationFailed_ReturnsFalse() {
+        // Read personal information from a broken SharedPreferencesHelper
+        boolean success =
+                mMockBrokenUserModel.saveUser(mUserBean);
+        Assert.assertEquals("Makes sure writing to a broken UserModel returns false",
+                success, false);
+    }
+
+    /**
+     * 创建一个mocked的SharedPreferences
+     */
+    private UserModel createMockUserModel() {
+        when(mMockSharedPreferences.getString(
+                eq(UserModel.SP_KEY_NAME), anyString()))
+                .thenReturn(mUserBean.getName());
+
+        when(mMockSharedPreferences.getInt(
+                eq(UserModel.SP_KEY_AGE), anyInt()))
+                .thenReturn(mUserBean.getAge());
+
+        // Mocking a successful commit.
+        when(mMockEditor.commit()).thenReturn(true);
+
+        // Return the MockEditor when requesting it.
+        when(mMockSharedPreferences.edit()).thenReturn(mMockEditor);
+        return new UserModel(mMockSharedPreferences);
+    }
+
+    /**
+     * 创建一个失败的mocked的SharedPreferences
+     */
+    private UserModel createBrokenMockUserModel() {
+        // Return the broken MockEditor when requesting it.
+        when(mMockBrokenSharedPreferences.edit()).thenReturn(mMockBrokenEditor);
+        return new UserModel(mMockBrokenSharedPreferences);
+    }
+
+}
+```
+
+
+
+
+
 
 ## [Demo源代码地址][1]
 
