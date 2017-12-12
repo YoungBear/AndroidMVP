@@ -467,6 +467,9 @@ public class UserModelTest {
      * 创建一个失败的mocked的SharedPreferences
      */
     private UserModel createBrokenMockUserModel() {
+        // Mocking a commit that fails.
+        when(mMockBrokenEditor.commit()).thenReturn(false);
+
         // Return the broken MockEditor when requesting it.
         when(mMockBrokenSharedPreferences.edit()).thenReturn(mMockBrokenEditor);
         return new UserModel(mMockBrokenSharedPreferences);
