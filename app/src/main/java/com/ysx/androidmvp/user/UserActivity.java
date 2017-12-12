@@ -1,5 +1,7 @@
 package com.ysx.androidmvp.user;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -7,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.ysx.androidmvp.MyApplication;
 import com.ysx.androidmvp.R;
 
 import butterknife.BindView;
@@ -34,7 +37,10 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
         /**
          * 创建一个Presenter对象
          */
-        mPresenter = new UserPresenter(this);
+        SharedPreferences sharedPreferences = MyApplication.sContext.getSharedPreferences(
+                MyApplication.SP_NAME, Context.MODE_PRIVATE);
+        UserModel model = new UserModel(sharedPreferences);
+        mPresenter = new UserPresenter(model, this);
     }
 
     /**
@@ -43,7 +49,7 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
     @Override
     protected void onResume() {
         super.onResume();
-        mPresenter.loadUser();
+        mPresenter.start();
     }
 
     @Override
@@ -64,6 +70,11 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
     @Override
     public void setAge(int age) {
         mEtAge.setText(String.valueOf(age));
+    }
+
+    @Override
+    public void setPresenter(UserContract.Presenter presenter) {
+        mPresenter = presenter;
     }
 
     @OnClick({R.id.btn_confirm, R.id.btn_reset})

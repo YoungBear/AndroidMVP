@@ -1,5 +1,8 @@
 package com.ysx.androidmvp.user;
 
+import com.ysx.androidmvp.BasePresenter;
+import com.ysx.androidmvp.BaseView;
+
 /**
  * @author ysx
  * @date 2017/11/25
@@ -24,7 +27,7 @@ public interface UserContract {
         boolean saveUser(UserBean userBean);
     }
 
-    interface View {
+    interface View extends BaseView<Presenter>{
 
         /**
          * @return 返回从编辑框输入的名字
@@ -50,7 +53,7 @@ public interface UserContract {
 
     }
 
-    interface Presenter {
+    interface Presenter extends BasePresenter{
 
         /**
          * 加载用户信息
