@@ -1,5 +1,7 @@
 # Android MVP 架构
 
+[本文github地址](https://github.com/YoungBear/AndroidMVP/blob/master/README.md)
+
 MVP ，即 Model - Presenter - View。
 
 **Presenter 交互中间人**

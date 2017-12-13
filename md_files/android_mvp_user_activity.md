@@ -1,5 +1,7 @@
 # Android MVP 代码练习 - UserActivity
 
+[本文github地址](https://github.com/YoungBear/AndroidMVP/blob/master/md_files/android_mvp_user_activity.md)
+
 功能描述：
 
 UserActivity只有一个界面，用来显示用户名，年龄，还有一些设置按钮。第一次进入的时候，默认从本地SharedPreferences加载数据，如果没有，则显示默认值("defalusName", 0)。
@@ -11,6 +13,20 @@ UserActivity只有一个界面，用来显示用户名，年龄，还有一些�
 开始写代码
 
 首先应该创建UserBean类，详细代码可以通过[Github][1]地址的工程里边找到。
+
+## 编写Base接口
+参考谷歌官方的mvp sample[todo-mvp](https://github.com/googlesamples/android-architecture/tree/todo-mvp)，我们可以构建一个BaseView和BasePresenter。
+
+```
+public interface BaseView<T> {
+    // View绑定Presenter是调用该方法
+    void setPresenter(T presenter);
+}
+public interface BasePresenter {
+    // 加载数据时，调用该方法，一般在onResume中
+    void start();
+}
+```
 
 ## 1. 编写契约类
 
@@ -42,7 +58,7 @@ UserActivity只有一个界面，用来显示用户名，年龄，还有一些�
 具体代码为：
 
 ```
-    interface View {
+    interface View extends BaseView<Presenter>{
         String getInputName();
         int getInputAge();
         void setName(String name);
@@ -58,7 +74,7 @@ UserActivity只有一个界面，用来显示用户名，年龄，还有一些�
 具体代码为：
 
 ```
-    interface Presenter {
+    interface Presenter extends BasePresenter{
         void loadUser();
         boolean saveUser(String name, int age);
     }
@@ -68,6 +84,9 @@ UserActivity只有一个界面，用来显示用户名，年龄，还有一些�
 
 ```
 package com.ysx.androidmvp.user;
+
+import com.ysx.androidmvp.BasePresenter;
+import com.ysx.androidmvp.BaseView;
 
 /**
  * @author ysx
@@ -93,7 +112,7 @@ public interface UserContract {
         boolean saveUser(UserBean userBean);
     }
 
-    interface View {
+    interface View extends BaseView<Presenter>{
 
         /**
          * @return 返回从编辑框输入的名字
@@ -119,7 +138,7 @@ public interface UserContract {
 
     }
 
-    interface Presenter {
+    interface Presenter extends BasePresenter{
 
         /**
          * 加载用户信息
@@ -203,11 +222,6 @@ UserPresenter实现加载用户信息和保存用户信息。Presenter中有两�
 ```
 package com.ysx.androidmvp.user;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-
-import com.ysx.androidmvp.MyApplication;
-
 /**
  * @author ysx
  * @date 2017/11/25
@@ -219,11 +233,10 @@ public class UserPresenter implements UserContract.Presenter {
     private final UserContract.Model mModel;
     private final UserContract.View mView;
 
-    public UserPresenter(UserContract.View view) {
+    public UserPresenter(UserContract.Model model, UserContract.View view) {
+        mModel = model;
         mView = view;
-        SharedPreferences sharedPreferences = MyApplication.sContext.getSharedPreferences(
-                MyApplication.SP_NAME, Context.MODE_PRIVATE);
-        mModel = new UserModel(sharedPreferences);
+        mView.setPresenter(this);
     }
 
     @Override
@@ -240,6 +253,11 @@ public class UserPresenter implements UserContract.Presenter {
         userBean.setAge(age);
         return mModel.saveUser(userBean);
     }
+
+    @Override
+    public void start() {
+        loadUser();
+    }
 }
 ```
 
@@ -247,11 +265,13 @@ public class UserPresenter implements UserContract.Presenter {
 
 View是通过`Activity`或者`Fragment`来实现的，用来具体更新UI。这里使用`Activity`。
 
-`Activity`只要实现更新UI的相关方法即可，再添加按钮的事件监听，分别调用Presenter的save()和load()函数。
+`Activity`只要实现更新UI的相关方法即可，再添加按钮的事件监听，分别调用Presenter的save()和load()函数。在onResume中加载数据(调用start方法)，并更新UI。
 
 ```
 package com.ysx.androidmvp.user;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -259,6 +279,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.ysx.androidmvp.MyApplication;
 import com.ysx.androidmvp.R;
 
 import butterknife.BindView;
@@ -286,7 +307,10 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
         /**
          * 创建一个Presenter对象
          */
-        mPresenter = new UserPresenter(this);
+        SharedPreferences sharedPreferences = MyApplication.sContext.getSharedPreferences(
+                MyApplication.SP_NAME, Context.MODE_PRIVATE);
+        UserModel model = new UserModel(sharedPreferences);
+        mPresenter = new UserPresenter(model, this);
     }
 
     /**
@@ -295,7 +319,7 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
     @Override
     protected void onResume() {
         super.onResume();
-        mPresenter.loadUser();
+        mPresenter.start();
     }
 
     @Override
@@ -318,6 +342,11 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
         mEtAge.setText(String.valueOf(age));
     }
 
+    @Override
+    public void setPresenter(UserContract.Presenter presenter) {
+        mPresenter = presenter;
+    }
+
     @OnClick({R.id.btn_confirm, R.id.btn_reset})
     public void onViewClicked(View view) {
         switch (view.getId()) {
@@ -337,7 +366,6 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
         }
     }
 }
-
 ```
 
 # 添加单元测试
