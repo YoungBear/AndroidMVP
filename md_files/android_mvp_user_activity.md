@@ -340,11 +340,11 @@ public class UserActivity extends AppCompatActivity implements UserContract.View
 
 ```
 
-## 添加单元测试
+# 添加单元测试
 
 参考google-sample的单元测试项目[Basic sample for Espresso](https://github.com/googlesamples/android-testing/tree/master/ui/espresso/BasicSample)。
 
-### 测试UserModel
+## 1. 测试UserModel
 
 这里参考[BasicSample](https://github.com/googlesamples/android-testing/tree/master/ui/espresso/BasicSample)中的`SharedPreferencesHelperTest`测试类。
 
@@ -480,7 +480,91 @@ public class UserModelTest {
 
 注意，`org.mockito.runners.MockitoJUnitRunner`已经废弃，而推荐使用`org.mockito.junit.MockitoJUnitRunner`。在测试类名的前边加上`@MockitoJUnitRunner`注解，表示告诉junit使用MockitoJunitRunner来运行该test case，这样才会处理各种注解。[参考 MockitoJUnitRunner is deprecated](https://stackoverflow.com/questions/41909538/mockitojunitrunner-is-deprecated)
 
+## 2. 测试UserPresenter
 
+主要测试UserPresenter的三个方法：
+
+1. 构造方法，验证调用了View的setPresenter函数
+2. loadUser方法，验证调用了UserModel的loadUser方法，和View的setName和setAge方法
+3. saveUser方法，验证调用了UserModel的saveUser方法，传递任意的UserBean对象
+
+```
+package com.ysx.androidmvp.user;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * @author ysx
+ * @date 2017/12/13
+ * @description UserPresenter单元测试
+ * 参考：https://github.com/googlesamples/android-architecture/blob/todo-mvp/todoapp/app/src/test/java/com/example/android/architecture/blueprints/todoapp/addedittask/AddEditTaskPresenterTest.java
+ */
+@RunWith(MockitoJUnitRunner.class)
+public class UserPresenterTest {
+
+    private static final String TEST_NAME = "Test name";
+    private static final int TEST_AGE = 20;
+
+    private UserBean mUserBean;
+
+    @Mock
+    private UserModel mMockUserModel;
+    @Mock
+    private UserContract.View mMockView;
+
+    private UserPresenter mUserPresenter;
+
+    /**
+     * UserPresenter的构造方法
+     * 验证调用了setPresenter函数
+     */
+    @Test
+    public void createPresenter_setsThePresenterToView() {
+        mUserPresenter = new UserPresenter(mMockUserModel, mMockView);
+        verify(mMockView).setPresenter(mUserPresenter);
+    }
+
+
+    /**
+     * loadUser方法
+     * 1. 验证调用了UserModel的loadUser方法
+     * 2. 验证调用了View的setName和setAge方法
+     */
+    @Test
+    public void loadUser_Success() {
+        mUserBean = new UserBean();
+        mUserBean.setName(TEST_NAME);
+        mUserBean.setAge(TEST_AGE);
+        when(mMockUserModel.loadUser()).thenReturn(mUserBean);
+        mUserPresenter = new UserPresenter(mMockUserModel, mMockView);
+
+        mUserPresenter.loadUser();
+
+        verify(mMockUserModel).loadUser();
+
+        verify(mMockView).setName(mUserBean.getName());
+        verify(mMockView).setAge(mUserBean.getAge());
+    }
+
+    /**
+     * saveUser方法
+     * 验证调用了UserModel的saveUser方法，传递任意的UserBean对象
+     */
+    @Test
+    public void saveUser_Success() {
+        mUserPresenter = new UserPresenter(mMockUserModel, mMockView);
+        mUserPresenter.saveUser("testName", 21);
+        verify(mMockUserModel).saveUser(any(UserBean.class));
+    }
+}
+```
 
 
 
